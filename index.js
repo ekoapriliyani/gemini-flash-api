@@ -62,3 +62,33 @@ app.post('/generate-from-image', upload.single('image'), async (req, res) => {
         fs.unlinkSync(req.file.path);
     }
 });
+
+// Endpoint untuk generate text dari dokumen
+app.post('/generate-from-document', upload.single('document'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No document file uploaded' });
+    }
+
+    const filePath = req.file.path;
+    const buffer = fs.readFileSync(filePath);
+    const base64Data = buffer.toString('base64');
+    const mimeType = req.file.mimetype;
+
+    try {
+        const documentPart = {
+            inlineData: { data: base64Data, mimeType }
+        };
+
+        const result = await model.generateContent(['Analyze this document', documentPart]);
+        const response = await result.response; // penting di-await
+
+        res.json({ output: response.text() });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    } finally {
+        if (req.file) {
+            fs.unlinkSync(filePath);
+        }
+    }
+});
+
