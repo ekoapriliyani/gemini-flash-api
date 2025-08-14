@@ -98,6 +98,7 @@ app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
         return res.status(400).json({ error: 'No audio file uploaded' });
     }
 
+    const filePath = req.file.path; // perbaikan: definisikan filePath
     const audioBuffer = fs.readFileSync(filePath);
     const base64Audio = audioBuffer.toString('base64');
     const mimeType = req.file.mimetype;
@@ -107,7 +108,10 @@ app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
             inlineData: { data: base64Audio, mimeType }
         };
 
-        const result = await model.generateContent(['Transcribe or analyze the following audio:', audioPart]);
+        const result = await model.generateContent([
+            'Transcribe or analyze the following audio:',
+            audioPart
+        ]);
         const response = await result.response; // penting di-await
 
         res.json({ output: response.text() });
@@ -119,4 +123,5 @@ app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
         }
     }
 });
+
 
