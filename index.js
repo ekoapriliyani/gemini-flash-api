@@ -92,3 +92,31 @@ app.post('/generate-from-document', upload.single('document'), async (req, res) 
     }
 });
 
+// Endpoint untuk generate text dari audio
+app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No audio file uploaded' });
+    }
+
+    const audioBuffer = fs.readFileSync(filePath);
+    const base64Audio = audioBuffer.toString('base64');
+    const mimeType = req.file.mimetype;
+
+    try {
+        const audioPart = {
+            inlineData: { data: base64Audio, mimeType }
+        };
+
+        const result = await model.generateContent(['Transcribe or analyze the following audio:', audioPart]);
+        const response = await result.response; // penting di-await
+
+        res.json({ output: response.text() });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    } finally {
+        if (req.file) {
+            fs.unlinkSync(filePath);
+        }
+    }
+});
+
